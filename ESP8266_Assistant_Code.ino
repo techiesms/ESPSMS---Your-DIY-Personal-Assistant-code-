@@ -443,10 +443,38 @@ void loop() {
     }
     else if (strstr(lower, stock))
     {
-      Serial.println("Sorry!!!!!, you don't have data regarding this");
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
+      Stock stock(lower);
+    String resu = stock.Comparison(lower);
+
+
+    if ((WiFiMulti.run() == WL_CONNECTED)) {
+      Serial.println("Processing....");
+
+      HTTPClient http;
+
+      http.begin("http://www.google.com/finance/info?q=NSE:" + resu + ""); //HTTP
+      int httpCode = http.GET();
+
+      // httpCode ahd ill be negative on error
+      if (httpCode > 0) {
+        // HTTP header has been send and Server response header has been handled
+
+
+        // file found at server
+        if (httpCode == HTTP_CODE_OK) {
+          String payload = http.getString();
+          stock.result(payload);
+
+        }
+      }
+      else {
+        Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+      }
+      http.end();
+      response = "";
+      res = "";
+    }
+
     }
     else if (strstr(lower, train1))
     {
