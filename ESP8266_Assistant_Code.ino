@@ -34,7 +34,8 @@ char* response = " ";
 String res = "";
 String RAILWAY_API_KEY = "YOUR_RAILWAY_API_KEY";//---------- API key for www.railwayapi.com
 String WEATHER_API_KEY = "YOUR_WEATHER_API_KEY";//---------- API key for api.openweathermap.org
-
+char* Host_Name = "YOUR_HOST_NAME";
+char* Password = "PASSWORD";
 
 
 ESP8266WiFiMulti WiFiMulti;
@@ -45,8 +46,12 @@ void setup() {
 
   pinMode(lightt, OUTPUT);//---------- Appilance1 to be controlled
   pinMode(fann, OUTPUT); //----------- Appilance2 to be controlled
-
-  WiFiMulti.addAP("SSID NAME", "Password"); //---------- Write you SSID and Password of yout router
+  WiFi.begin(Host_Name, Password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  WiFiMulti.addAP(Host_Name,Password); //---------- Write you SSID and Password of yout router
 }
 
 void loop() {
@@ -89,9 +94,434 @@ void loop() {
 
 
 
-    if (strstr(lower, que1) || strstr(lower, que2) || strstr(lower, que3) ||
-        strstr(lower, que4) || strstr(lower, que5) || strstr(lower, que6) || strstr(lower, que7) ||
-        strstr(lower, que8) || strstr(lower, que9))
+
+    if (strstr(lower, cal))
+    {
+      calculate calci(lower);
+      float answer = calci.calculator(lower);
+      Serial.println("\n");
+      Serial.println(answer);
+      Serial.println("\n");
+      response = "";
+      res = "";
+    }
+
+
+
+
+
+
+    else if (strstr(lower, weather))
+    {
+      int i = 0;
+      while (lower[i] != 'o' || lower[i + 1] != 'f')
+        i++;
+
+      String result = (String)lower;
+      result = result.substring(i + 3);
+      result = result.substring(0, result.length() - 2);
+
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        HTTPClient http; //stringOne.startsahdith("HTTP/1.1")
+
+        http.begin("http://api.openweathermap.org/data/2.5/weather?q=" + result + "&APPID=" + WEATHER_API_KEY); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode ahd ill be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            char* response = &payload[0];
+            Weather weather(response);
+            float temp_k = weather.temp_k(response);
+            float temp_c = weather.temp_c();
+            float temp_f = weather.temp_f();
+            String city_name = weather.city_name(response);
+            String country_name = weather.country_name(response);
+            String city_desc = weather.city_desc(response);
+            String city_cond = weather.city_cond(response);
+            String humidity = weather.humidity(response);
+            String clouds = weather.clouds(response);
+            String atm_pressure = weather.atm_pressure(response);
+
+            Serial.println("\n");
+            Serial.print("City: "); Serial.println(city_name);
+            Serial.print("Country: "); Serial.println(country_name);
+            Serial.println("Temperature");
+            Serial.print("     "); Serial.print(temp_k, 3); Serial.println(" kelvin");
+            Serial.print("     "); Serial.print(temp_c, 3); Serial.println(" deg. celcius");
+            Serial.print("     "); Serial.print(temp_f, 3); Serial.println(" deg. fahrenheit");
+            Serial.print("Weather Status: "); Serial.println(city_cond);
+            Serial.print("Weather Description: "); Serial.println(city_desc);
+            Serial.print("Atmospheric Presure: "); Serial.println(atm_pressure + " hPa");
+            Serial.print("Humidity: "); Serial.println(humidity + " %rH");
+            Serial.print("Clouds: "); Serial.println(clouds + "%");
+            Serial.println("\n");
+          }
+        } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+    }
+
+    else if (strstr(lower, temp))
+    {
+
+      int i = 0;
+      while (lower[i] != 'o' || lower[i + 1] != 'f')
+        i++;
+      // Serial.println(i);
+      String result = (String)lower;
+      result = result.substring(i + 3);
+      result = result.substring(0, result.length() - 2);
+
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        HTTPClient http; //stringOne.startsahdith("HTTP/1.1")
+        http.begin("http://api.openweathermap.org/data/2.5/weather?q=" + result + "&APPID=" + WEATHER_API_KEY); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode ahd ill be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            char* response = &payload[0];
+
+            Weather weather(response);
+            String city_name = weather.city_name(response);
+            String country = weather.country_name(response);
+            float temp_k = weather.temp_k(response);
+            float temp_c = weather.temp_c();
+            float temp_f = weather.temp_f();
+
+
+
+            Serial.println("\n");
+            Serial.print("City: "); Serial.println(city_name);
+            Serial.print("Country: "); Serial.println(country);
+            Serial.println("Temperature");
+            Serial.print("     "); Serial.print(temp_k, 3); Serial.println(" kelvin");
+            Serial.print("     "); Serial.print(temp_c, 3); Serial.println(" deg. celcius");
+            Serial.print("     "); Serial.print(temp_f, 3); Serial.println(" deg. fahrenheit");
+            Serial.println("\n");
+          }
+        } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+
+    }
+
+    else if (strstr(lower, mean))
+    {
+      Serial.println("Sorry!!!!!, you don't have data regarding this");
+      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
+      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
+      Serial.println(); res = "";  response = "";
+    }
+
+
+
+    else if (strstr(lower, quo) || strstr(lower, quot))
+    {
+      Serial.println("Sorry!!!!!, you don't have data regarding this");
+      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
+      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
+      Serial.println(); res = "";  response = "";
+    }
+    else if (strstr(lower, stock))
+    {
+      Stock stock(lower);
+      String resu = stock.Comparison(lower);
+
+
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        HTTPClient http;
+
+        http.begin("http://www.google.com/finance/info?q=NSE:" + resu + ""); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode ahd ill be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            stock.result(payload);
+
+          }
+        }
+        else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+        http.end();
+        response = "";
+        res = "";
+      }
+
+    }
+    else if (strstr(lower, train1))
+    {
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        String Train_Number = (String)lower;
+        Train_Number = Train_Number.substring(15, 20);
+
+
+        HTTPClient http;
+
+        http.begin("http://api.railwayapi.com/route/train/" + Train_Number + "/apikey/" + RAILWAY_API_KEY + "/"); //HTTP
+
+        int httpCode = http.GET();
+
+        // httpCode will be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+
+            Serial.println("\n");
+            Serial.println(payload);
+            Serial.println("\n");
+          }
+        } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+
+    }
+
+    else if (strstr(lower, train2))
+    {
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        String Train_Number = (String)lower;
+        Train_Number = Train_Number.substring(16, 21);
+
+        Serial.println("\n");
+        Serial.println("Enter the date of journey (YYYYMMDD):");
+        Serial.println("\n");
+
+        res = "";
+        while (!Serial.available());
+        while (Serial.available())
+
+        {
+          char add = Serial.read();
+          if (add != '\n') // read until new line
+            res = res + add;
+          delay(1);
+        }
+        String doj = &res[0];
+        doj = doj.substring(0, 8);
+
+        Serial.println("Processing....");
+        HTTPClient http;
+
+        http.begin("http://api.railwayapi.com/live/train/" + Train_Number + "/doj/" + doj + "/apikey/" + RAILWAY_API_KEY + "/"); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode will be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+
+            Serial.println("\n");
+            Serial.println(payload);
+            Serial.println("\n");
+          }
+
+        } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+
+
+    }
+
+    else if (strstr(lower, train3))
+    {
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        String station_name = (String)lower;
+        station_name = station_name.substring(16, 21);
+
+
+        HTTPClient http;
+
+        http.begin("http://api.railwayapi.com/name_to_code/station/" + station_name + "/apikey/" + RAILWAY_API_KEY + "/"); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode will be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+
+            Serial.println("\n");
+            Serial.println(payload);
+            Serial.println("\n");
+          }
+        } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+    }
+
+    else if (strstr(lower, train4))
+    {
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+
+        String source = (String)lower;
+        source = source.substring(14);
+
+        char* desti = &source[0];
+        int i = 0;
+        int j = 0;
+        while (desti[i] != 't' || desti[i + 1] != 'o')
+          i++;
+        String destin = (String)desti;
+        source = source.substring(0, i - 1); // departing station
+
+        while (desti[j] != '\n')
+          j++;
+        String dest = destin.substring(i + 3, j - 1); // destination station
+
+
+
+        Serial.println("Enter the date in format (dd-mm)");
+        res = "";
+        while (!Serial.available());
+        while (Serial.available())
+
+        {
+          char add = Serial.read();
+          if (add != '\n') // Read untill new line
+            res = res + add;
+          delay(1);
+        }
+
+        String date = &res[0];
+        date = date.substring(0, 5);
+
+        HTTPClient http;
+        Serial.println("Processing....");
+        http.begin("http://api.railwayapi.com/between/source/" + source + "/dest/" + dest + "/date/" + date + "/apikey/" + RAILWAY_API_KEY + "/"); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode will be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            Serial.println("\n");
+            Serial.println(payload);
+            Serial.println("\n");
+          }
+
+        } else {
+
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+    }
+
+
+    else if (strstr(lower, train5))
+    {
+      if ((WiFiMulti.run() == WL_CONNECTED)) {
+        Serial.println("Processing....");
+        String pnr_no = (String)lower;
+        pnr_no = pnr_no.substring(13);
+        // Serial.println(pnr_no);
+
+
+        HTTPClient http;
+
+        http.begin("http://api.railwayapi.com/pnr_status/pnr/" + pnr_no + "/apikey/" + RAILWAY_API_KEY + "/"); //HTTP
+        int httpCode = http.GET();
+
+        // httpCode will be negative on error
+        if (httpCode > 0) {
+          // HTTP header has been send and Server response header has been handled
+
+
+          // file found at server
+          if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+
+            Serial.println("\n");
+            Serial.println(payload);
+            Serial.println("\n");
+          }
+        } else {
+          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end();
+        response = "";
+        res = "";
+      }
+
+    }
+
+    else if (strstr(lower, que1) || strstr(lower, que2) || strstr(lower, que3) ||
+             strstr(lower, que4) || strstr(lower, que5) || strstr(lower, que6) || strstr(lower, que7) ||
+             strstr(lower, que8) || strstr(lower, que9))
     {
       if ((WiFiMulti.run() == WL_CONNECTED)) {
         Serial.println("Processing....");
@@ -288,234 +718,6 @@ void loop() {
       }
     }
 
-    else if (strstr(lower, cal))
-    {
-      calculate calci(lower);
-      float answer = calci.calculator(lower);
-      Serial.println("\n");
-      Serial.println(answer);
-      Serial.println("\n");
-      response = "";
-      res = "";
-    }
-
-
-
-
-
-
-    else if (strstr(lower, weather))
-    {
-      int i = 0;
-      while (lower[i] != 'o' || lower[i + 1] != 'f')
-        i++;
-
-      String result = (String)lower;
-      result = result.substring(i + 3);
-      result = result.substring(0, result.length() - 2);
-
-      if ((WiFiMulti.run() == WL_CONNECTED)) {
-        Serial.println("Processing....");
-
-        HTTPClient http; //stringOne.startsahdith("HTTP/1.1")
-
-        http.begin("http://api.openweathermap.org/data/2.5/weather?q=" + result + "&APPID=" + WEATHER_API_KEY); //HTTP
-        int httpCode = http.GET();
-
-        // httpCode ahd ill be negative on error
-        if (httpCode > 0) {
-          // HTTP header has been send and Server response header has been handled
-
-
-          // file found at server
-          if (httpCode == HTTP_CODE_OK) {
-            String payload = http.getString();
-            char* response = &payload[0];
-            Weather weather(response);
-            float temp_k = weather.temp_k(response);
-            float temp_c = weather.temp_c();
-            float temp_f = weather.temp_f();
-            String city_name = weather.city_name(response);
-            String country_name = weather.country_name(response);
-            String city_desc = weather.city_desc(response);
-            String city_cond = weather.city_cond(response);
-            String humidity = weather.humidity(response);
-            String clouds = weather.clouds(response);
-            String atm_pressure = weather.atm_pressure(response);
-
-            Serial.println("\n");
-            Serial.print("City: "); Serial.println(city_name);
-            Serial.print("Country: "); Serial.println(country_name);
-            Serial.println("Temperature");
-            Serial.print("     "); Serial.print(temp_k, 3); Serial.println(" kelvin");
-            Serial.print("     "); Serial.print(temp_c, 3); Serial.println(" deg. celcius");
-            Serial.print("     "); Serial.print(temp_f, 3); Serial.println(" deg. fahrenheit");
-            Serial.print("Weather Status: "); Serial.println(city_cond);
-            Serial.print("Weather Description: "); Serial.println(city_desc);
-            Serial.print("Atmospheric Presure: "); Serial.println(atm_pressure + " hPa");
-            Serial.print("Humidity: "); Serial.println(humidity + " %rH");
-            Serial.print("Clouds: "); Serial.println(clouds + "%");
-            Serial.println("\n");
-          }
-        } else {
-          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
-        }
-
-        http.end();
-        response = "";
-        res = "";
-      }
-    }
-
-    else if (strstr(lower, temp))
-    {
-
-      int i = 0;
-      while (lower[i] != 'o' || lower[i + 1] != 'f')
-        i++;
-      // Serial.println(i);
-      String result = (String)lower;
-      result = result.substring(i + 3);
-      result = result.substring(0, result.length() - 2);
-
-      if ((WiFiMulti.run() == WL_CONNECTED)) {
-        Serial.println("Processing....");
-
-        HTTPClient http; //stringOne.startsahdith("HTTP/1.1")
-        http.begin("http://api.openweathermap.org/data/2.5/weather?q=" + result + "&APPID=" + WEATHER_API_KEY); //HTTP
-        int httpCode = http.GET();
-
-        // httpCode ahd ill be negative on error
-        if (httpCode > 0) {
-          // HTTP header has been send and Server response header has been handled
-
-
-          // file found at server
-          if (httpCode == HTTP_CODE_OK) {
-            String payload = http.getString();
-            char* response = &payload[0];
-
-            Weather weather(response);
-            String city_name = weather.city_name(response);
-            String country = weather.country_name(response);
-            float temp_k = weather.temp_k(response);
-            float temp_c = weather.temp_c();
-            float temp_f = weather.temp_f();
-
-
-
-            Serial.println("\n");
-            Serial.print("City: "); Serial.println(city_name);
-            Serial.print("Country: "); Serial.println(country);
-            Serial.println("Temperature");
-            Serial.print("     "); Serial.print(temp_k, 3); Serial.println(" kelvin");
-            Serial.print("     "); Serial.print(temp_c, 3); Serial.println(" deg. celcius");
-            Serial.print("     "); Serial.print(temp_f, 3); Serial.println(" deg. fahrenheit");
-            Serial.println("\n");
-          }
-        } else {
-          Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
-        }
-
-        http.end();
-        response = "";
-        res = "";
-      }
-
-    }
-
-    else if (strstr(lower, mean))
-    {
-      Serial.println("Sorry!!!!!, you don't have data regarding this");
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-    }
-
-
-
-    else if (strstr(lower, quo) || strstr(lower, quot))
-    {
-      Serial.println("Sorry!!!!!, you don't have data regarding this");
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-    }
-    else if (strstr(lower, stock))
-    {
-      Stock stock(lower);
-    String resu = stock.Comparison(lower);
-
-
-    if ((WiFiMulti.run() == WL_CONNECTED)) {
-      Serial.println("Processing....");
-
-      HTTPClient http;
-
-      http.begin("http://www.google.com/finance/info?q=NSE:" + resu + ""); //HTTP
-      int httpCode = http.GET();
-
-      // httpCode ahd ill be negative on error
-      if (httpCode > 0) {
-        // HTTP header has been send and Server response header has been handled
-
-
-        // file found at server
-        if (httpCode == HTTP_CODE_OK) {
-          String payload = http.getString();
-          stock.result(payload);
-
-        }
-      }
-      else {
-        Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
-      }
-      http.end();
-      response = "";
-      res = "";
-    }
-
-    }
-    else if (strstr(lower, train1))
-    {
-      Serial.println("Sorry!!!!!, you don't have data regarding this");
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-
-    }
-
-    else if (strstr(lower, train2))
-    {
-      Serial.println("Sorry!!!!!, you don't have data regarding this");
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-
-    }
-
-    else if (strstr(lower, train3))
-    {
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-    }
-
-    else if (strstr(lower, train4))
-    { Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-    }
-
-
-    else if (strstr(lower, train5))
-    {
-      Serial.println("Sorry!!!!!, you don't have data regarding this");
-      Serial.println("Wait for the upcoming series on Making your own Smart Assiatant using ESP8266");
-      Serial.println("Or you haven't downloaded the latest code, check out my github, Github/techiesms");
-      Serial.println(); res = "";  response = "";
-
-    }
 
     else if (strstr(lower, help))
     {
@@ -541,7 +743,7 @@ void loop() {
       Serial.println("Want to know the route of any train, type - route of train TRAIN_NUMBER(Right now strictly for Indian Railways)");
       Serial.println("eg. route of train 12433"); Serial.println("\n");
       Serial.println("Want to know the live status of any train, type - status of  TRAIN_NUMBER(Right now strictly for Indian Railways)");
-      Serial.println("eg. status of 12433"); Serial.println("\n");
+      Serial.println("eg. status of train 12433"); Serial.println("\n");
       Serial.println("Want to know your PNR status, type - check my pnr PNR_NUMBER(Right now strictly for Indian Railways)");
       Serial.println("eg. check my pnr XXXXXXXXXX"); Serial.println("\n");
       Serial.println("Want to know the train between two station, type - train between SOURCE_STATION_CODE to DESTINATION_STATION_CODE(Right now strictly for Indian Railways)");
